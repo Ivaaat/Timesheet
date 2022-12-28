@@ -7,8 +7,8 @@ import telebot
 from telebot import types
 import logging
 from telebot import formatting
-from edit_table import edit_timesheet, export_excel_jpeg, default_timesheet
-import threading
+from edit_table import edit_timesheet, export_excel_jpeg, default_timesheet, except_perm
+from MyDataBase import MyBaseDB
 
 root_path = os.path.dirname(os.path.abspath(__file__))
 TOKEN = "5877308961:AAE5myH4vER7-VaROqFmc0ApExdaQK0-FiU"
@@ -28,19 +28,36 @@ bot.send_message(377190896,'Жми /start')
 @bot.message_handler(commands='start')
 def timesheet_person(message):
     id_chief = 240652259
+    base = MyBaseDB()
+    list_users = base.open_list()
+    users = {}
+    for i in range(1,len(list_users)):
+        text_list = list_users[i][2:].split()
+        for id in text_list:
+            if id.isdigit():
+                text_list.remove(id) 
+                users[int(id)] = ' '.join(text_list)
+                break
+    #users = {377190896: "Конихин Иван Владимирович"}
     #chief --- "chat":{"id":240652259,"first_name":"Dmitry","last_name":"Dmitriev","username":"oDDSo","type":"private"}
     # if message.chat.id == 377190896 or message.chat.id == 240652259:
     #     name = f"{message.chat.first_name} {message.chat.username}"
     # else:
     #     name = "Иванов Иван Иваныч"
-    name = f"{message.chat.first_name} {message.chat.username}"
-    employee_name = formatting.mbold(name)
-    bot.send_message(message.chat.id, employee_name, parse_mode='MarkdownV2')
+    #name = f"{message.chat.first_name} {message.chat.username}"
+    #employee_name = formatting.mbold(name)
+    if message.chat.id in users:
+        #for id, employee_name in users.items():
+        bot.send_message(message.chat.id, formatting.mbold(users[message.chat.id]), parse_mode='MarkdownV2')
+    else:
+        msg = bot.send_message(message.chat.id,f"Отправь админу https://t.me/vaneuser, свой id: {message.chat.id} и ФИО\n И нажми /start после того как он тебя добавит")
+        return bot.register_next_step_handler(msg, timesheet_person)
     bot.delete_my_commands()
-    return timesheet_buttons(message, name)
+    return timesheet_buttons(message, users[message.chat.id])
 
 def timesheet_buttons(message, employee_name):
-    buttons = ['По умолчанию', 'Изменить табель', 'Изменить имя']
+    #buttons = ['По умолчанию', 'Изменить табель', 'Изменить имя']
+    buttons = ['По умолчанию', 'Изменить табель']
     now = datetime.datetime.now()
     markup = types.ReplyKeyboardMarkup()
     #if message.chat.id == 377190896 or message.chat.id == 240652259:
@@ -56,17 +73,18 @@ def timesheet_buttons(message, employee_name):
         msg = bot.send_message(message.chat.id, f"{name_message}", reply_markup = markup, parse_mode="")
         return bot.register_next_step_handler(msg, get_timesheet, buttons, employee_name)
     elif message.chat.id == 377190896:
-        name_button = "Выгрузить табель"
-        button_chief = types.KeyboardButton(name_button)
-        markup.add(button_chief)
-    else:
-        name = f"{message.chat.first_name} {message.chat.username}"
-        bot.send_message(message.chat.id,name + " Давай до свидания!")
-        return timesheet_buttons(message, employee_name)
+        add_user = types.KeyboardButton("Добавить пользователя")
+        button_chief = types.KeyboardButton("Выгрузить табель")
+        markup.add(add_user, button_chief)
+    # else:
+    #     name = f"{message.chat.first_name} {message.chat.username}"
+    #     bot.send_message(message.chat.id,name + " Давай до свидания!")
+    #     return timesheet_buttons(message, employee_name)
     for button in buttons:
         timesheet_default = types.KeyboardButton(button)
         markup.add(timesheet_default)
-    msg = bot.send_message(message.chat.id, f"Создай и отправь начальнику табель!\n\n\
+    msg = bot.send_message(message.chat.id, f"Создай табель!\n\n\
+Он автоматически улетит начальнику!\n\n\
 По умолчанию - Работа в офисе, 8 часов, выходные помечены красным\n\
 Изменить табель - настройка табеля под свои нуждны\n\
 Изменить ФИО - изменение дефолтного ФИО", reply_markup = markup, parse_mode="")
@@ -88,7 +106,7 @@ def get_timesheet(message, list_buttons, employee_name, back = ""):
         #bot.send_document(message.chat.id, document =  open(filename, 'rb'))
         os.remove(filename_jpeg)
         return timesheet_buttons(message, employee_name)
-    elif text == list_buttons[2]:
+    elif text == 'Изменить имя':
         msg = bot.send_message(message.chat.id, 'Введи имя')
         bot.register_next_step_handler(msg, edit_name)
     elif text == list_buttons[1] or back == "Назад":
@@ -109,9 +127,26 @@ def get_timesheet(message, list_buttons, employee_name, back = ""):
         filename_xlsx = f'Табель {calendar.month_name[month]  } {year}.xlsx'
         bot.send_document(message.chat.id, document =  open(filename_xlsx, 'rb'))
         return timesheet_buttons(message, employee_name)
+    elif text == "Добавить пользователя": 
+        msg = bot.send_message(message.chat.id, "Введи id и ФИО")
+        return bot.register_next_step_handler(msg, add_user, employee_name)
+
     else:
         bot.send_message(message.chat.id, f'Нажми на кнопку {employee_name}')
         return timesheet_buttons(message, employee_name)
+
+def add_user(message, employee_name):
+    base = MyBaseDB()
+    text_list = message.text.split()
+    for id in text_list:
+        if id.isdigit():
+            id_send = id
+            text_list.remove(id_send)
+            break
+    base.create(" ".join(text_list), id_send)
+    bot.send_message(message.chat.id,base.open())
+    return timesheet_buttons(message, employee_name)
+    
 
 def split_message(message, employee_name, buttons):
     try:
@@ -168,6 +203,7 @@ def split_message(message, employee_name, buttons):
 Если перечисляешь разные объекты обязательно ставь между ними \",\"\n\
 Пример:\"2-5 ПГВР 429.00, 6-13 ПГВР 123.70 Торгили, 14-20 отпуск, 21-31 больничный\"")
             #print(f"\n\n\n\n\n\{e}\n\n\n\n\n\n\n\n\n\n")
+            except_perm(filename)
             bot.send_message(377190896, e)
             return get_timesheet(message, buttons, employee_name, back = 'Назад' )
 
