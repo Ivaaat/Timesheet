@@ -40,14 +40,7 @@ def timesheet_person(message):
                 break
     #users = {377190896: "Конихин Иван Владимирович"}
     #chief --- "chat":{"id":240652259,"first_name":"Dmitry","last_name":"Dmitriev","username":"oDDSo","type":"private"}
-    # if message.chat.id == 377190896 or message.chat.id == 240652259:
-    #     name = f"{message.chat.first_name} {message.chat.username}"
-    # else:
-    #     name = "Иванов Иван Иваныч"
-    #name = f"{message.chat.first_name} {message.chat.username}"
-    #employee_name = formatting.mbold(name)
     if message.chat.id in users:
-        #for id, employee_name in users.items():
         bot.send_message(message.chat.id, formatting.mbold(users[message.chat.id]), parse_mode='MarkdownV2')
     else:
         msg = bot.send_message(message.chat.id,f"Отправь админу https://t.me/vaneuser, свой id: {message.chat.id} и ФИО\n И нажми /start после того как он тебя добавит")
@@ -60,7 +53,6 @@ def timesheet_buttons(message, employee_name):
     buttons = ['По умолчанию', 'Изменить табель']
     now = datetime.datetime.now()
     markup = types.ReplyKeyboardMarkup()
-    #if message.chat.id == 377190896 or message.chat.id == 240652259:
     if  message.chat.id == 240652259:
         name_button = "Выгрузить табель"
         button_chief = types.KeyboardButton(name_button)
@@ -100,10 +92,8 @@ def get_timesheet(message, list_buttons, employee_name, back = ""):
     text = message.text
     if text == list_buttons[0]:
         filename = default_timesheet (employee_name = employee_name)
-        #th1 = threading.Thread(target = export_excel_jpeg, args=(filename, employee_name), name='JPG').start()
         filename_jpeg = export_excel_jpeg(filename, employee_name)
         bot.send_photo(message.chat.id, photo=open(filename_jpeg, 'rb'), caption=employee_name)
-        #bot.send_document(message.chat.id, document =  open(filename, 'rb'))
         os.remove(filename_jpeg)
         return timesheet_buttons(message, employee_name)
     elif text == 'Изменить имя':
@@ -153,6 +143,7 @@ def split_message(message, employee_name, buttons):
         if message.text == 'Назад':
             bot.send_message(message.chat.id, f'Нажми на кнопку {employee_name}')
             return timesheet_buttons(message, employee_name)
+        filename = default_timesheet (employee_name = employee_name)
         now = datetime.datetime.now()
         text = message.text
         list_range_name = []
@@ -189,22 +180,17 @@ def split_message(message, employee_name, buttons):
                     work_hour_split_and_descr[2] = work_hour_split_and_descr[1]
                     list_range_name[j].append(8)       
             list_range_name[j].append(work_hour_split_and_descr[2]) 
-        filename = default_timesheet (employee_name = employee_name)
         edit_timesheet(filename, list_range_name, employee_name)
-        #thr1 = threading.Thread(target = export_excel_jpeg(filename, employee_name)).start()
         filename_jpeg = export_excel_jpeg(filename, employee_name)
         bot.send_photo(message.chat.id, photo=open(filename_jpeg, 'rb'), caption=employee_name)
-        bot.send_message(377190896, employee_name + ' .Сделал отчет!')
-        #bot.send_document(message.chat.id, document =  open(filename_jpeg, 'rb'))
         os.remove(filename_jpeg)
         return timesheet_buttons(message, employee_name)
     except Exception as e:
             bot.send_message(message.chat.id,"Неверный формат ввода!\n\n\
 Если перечисляешь разные объекты обязательно ставь между ними \",\"\n\
 Пример:\"2-5 ПГВР 429.00, 6-13 ПГВР 123.70 Торгили, 14-20 отпуск, 21-31 больничный\"")
-            #print(f"\n\n\n\n\n\{e}\n\n\n\n\n\n\n\n\n\n")
             except_perm(filename)
-            bot.send_message(377190896, e)
+            #bot.send_message(377190896, e)
             return get_timesheet(message, buttons, employee_name, back = 'Назад' )
 
 def edit_name(message):

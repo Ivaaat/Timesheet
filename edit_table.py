@@ -31,7 +31,7 @@ def edit_timesheet(filename, range_work, employee_name):
                 sheet_ranges[f'B{i + line_shift}'] = range_list[2]
                 sheet_ranges[f'C{i + line_shift}'] = range_list[3]
                 sheet_ranges[f'D{i + line_shift}'] = range_list[4]
-                if range_list[4] == "":
+                if len(range_list[4]) < len("Комментарии"):
                     sheet_ranges.column_dimensions['D'].width = 15
                 else:
                     sheet_ranges.column_dimensions['D'].width = len(range_list[4]) * 1.15
