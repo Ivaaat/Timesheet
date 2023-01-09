@@ -11,6 +11,7 @@ import pythoncom
 from PIL import ImageGrab
 import psutil
 import time
+from ctypes import windll
 
 
 def except_perm(filename):
@@ -124,13 +125,15 @@ def default_timesheet(place="Работа в офисе",employee_name="Кони
             calendar_month[list_name_day[i]] = day
         asd.append(calendar_month)
     list_range = ['A', 'B', 'C', 'D']
+    i = 0
     for dict_week in asd:
         for name_day, num_day in dict_week.items():
             try:
-                weekends_and_holidays = weekends_and_holidays2022[calendar.month_name[month]] 
+                weekends_and_holidays = weekends_and_holidays2023[calendar.month_name[month]] 
             except KeyError:
                 weekends_and_holidays = {}
             if name_day in ['Сб','Вс'] and num_day != 0 or num_day in weekends_and_holidays:
+                i += 1
                 work_and_travel = ""
                 num_work_hour = ""
                 for name_range in list_range:
@@ -143,7 +146,9 @@ def default_timesheet(place="Работа в офисе",employee_name="Кони
                         ws[f'{name_range}{num_day + line_shift}'].border = Border(top=thin, bottom=thin, left=thin, right=thin)
                     ws[f'{name_range}{num_day + line_shift}'].fill = PatternFill('solid', fgColor=red_color)
             elif num_day != 0:
-                if now.day <= num_day and now.day <= 15:
+                #if now.day <= i and now.day <= 15:
+                i += 1
+                if  15 < i and now.day < 15:
                     work_and_travel = ""
                     num_work_hour = ""
                 else:
@@ -201,11 +206,15 @@ def export_excel_jpeg(filename, name_sheet):
     wb1 = o.Workbooks.Open(wb_path)
     ws = wb1.Worksheets(name_sheet)
     #time.sleep(1)
-    ws.Range("A1:D34").CopyPicture(Format = 2)
+    try:
+        ws.Range("A1:D34").CopyPicture(Format = 2)
+    except Exception:
+        export_excel_jpeg(filename, name_sheet)
     path_to_jpeg = r'{}'.format(path[:path.find('.')] + '.jpg')
     img = ImageGrab.grabclipboard()
     img.save(get_path(path_to_jpeg) )
     wb1.Close()
+    o.CutCopyMode = False
     o.Quit()
     return path_to_jpeg
 

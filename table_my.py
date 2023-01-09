@@ -22,13 +22,24 @@ bot.set_my_commands(
     ],
 )
 
-bot.send_message(377190896,'Жми /start')
+
+base = MyBaseDB()
+# list_users = base.open_list()
+# users = {}
+# for i in range(1,len(list_users)):
+#     text_list = list_users[i][2:].split()
+#     for id in text_list:
+#         if id.isdigit():
+#             text_list.remove(id) 
+#             users[int(id)] = ' '.join(text_list)
+#             break
+# for user_id, name in users.items():
+#     bot.send_message(user_id, f'{name} Жми /start. Вышло обновление!')
 
 
 @bot.message_handler(commands='start')
 def timesheet_person(message):
-    id_chief = 240652259
-    base = MyBaseDB()
+    #base = MyBaseDB()
     list_users = base.open_list()
     users = {}
     for i in range(1,len(list_users)):
@@ -78,8 +89,8 @@ def timesheet_buttons(message, employee_name):
     msg = bot.send_message(message.chat.id, f"Создай табель!\n\n\
 Он автоматически улетит начальнику!\n\n\
 По умолчанию - Работа в офисе, 8 часов, выходные помечены красным\n\
-Изменить табель - настройка табеля под свои нуждны\n\
-Изменить ФИО - изменение дефолтного ФИО", reply_markup = markup, parse_mode="")
+Изменить табель - настройка табеля под свои нужды\n", reply_markup = markup, parse_mode="")    
+#Изменить ФИО - изменение дефолтного ФИО", reply_markup = markup, parse_mode="")
     bot.register_next_step_handler(msg, get_timesheet, buttons, employee_name)
 
 
@@ -134,6 +145,7 @@ def add_user(message, employee_name):
             text_list.remove(id_send)
             break
     base.create(" ".join(text_list), id_send)
+    bot.send_message(int(id_send), "Ты добавлен, жми /start")
     bot.send_message(message.chat.id,base.open())
     return timesheet_buttons(message, employee_name)
     
