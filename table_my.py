@@ -24,19 +24,6 @@ bot.set_my_commands(
 
 
 base = MyBaseDB()
-# list_users = base.open_list()
-# users = {}
-# for i in range(1,len(list_users)):
-#     text_list = list_users[i][2:].split()
-#     for id in text_list:
-#         if id.isdigit():
-#             text_list.remove(id) 
-#             users[int(id)] = ' '.join(text_list)
-#             break
-# for user_id, name in users.items():
-#     bot.send_message(user_id, f'{name} Жми /start. Вышло обновление!')
-
-
 @bot.message_handler(commands='start')
 def timesheet_person(message):
     #base = MyBaseDB()
@@ -49,8 +36,6 @@ def timesheet_person(message):
                 text_list.remove(id) 
                 users[int(id)] = ' '.join(text_list)
                 break
-    #users = {377190896: "Конихин Иван Владимирович"}
-    #chief --- "chat":{"id":240652259,"first_name":"Dmitry","last_name":"Dmitriev","username":"oDDSo","type":"private"}
     if message.chat.id in users:
         bot.send_message(message.chat.id, formatting.mbold(users[message.chat.id]), parse_mode='MarkdownV2')
     else:
@@ -79,10 +64,6 @@ def timesheet_buttons(message, employee_name):
         add_user = types.KeyboardButton("Добавить пользователя")
         button_chief = types.KeyboardButton("Выгрузить табель")
         markup.add(add_user, button_chief)
-    # else:
-    #     name = f"{message.chat.first_name} {message.chat.username}"
-    #     bot.send_message(message.chat.id,name + " Давай до свидания!")
-    #     return timesheet_buttons(message, employee_name)
     for button in buttons:
         timesheet_default = types.KeyboardButton(button)
         markup.add(timesheet_default)
@@ -90,7 +71,6 @@ def timesheet_buttons(message, employee_name):
 Он автоматически улетит начальнику!\n\n\
 По умолчанию - Работа в офисе, 8 часов, выходные помечены красным\n\
 Изменить табель - настройка табеля под свои нужды\n", reply_markup = markup, parse_mode="")    
-#Изменить ФИО - изменение дефолтного ФИО", reply_markup = markup, parse_mode="")
     bot.register_next_step_handler(msg, get_timesheet, buttons, employee_name)
 
 
