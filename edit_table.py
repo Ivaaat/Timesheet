@@ -22,6 +22,7 @@ def except_perm(filename):
                     process.terminate()
                     break
 
+                    
 def edit_timesheet(filename, range_work, employee_name):
         locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
         line_shift = 3
@@ -38,10 +39,8 @@ def edit_timesheet(filename, range_work, employee_name):
                     sheet_ranges.column_dimensions['D'].width = len(range_list[4]) * 1.15
         wb.save(filename)
 
-
-
-def default_timesheet(place="Работа в офисе",employee_name="Конихин Иван Владимирович"):
-#def default_timesheet(place="Работа в офисе", employee_name="Иванов Иван Иваныч"):
+        
+def default_timesheet(place="Работа в офисе",employee_name="qwe"):
     weekends_and_holidays2022 = {'Январь' : [1,2,3,4,5,6,7,8,9],
                                 'Февраль': [23],
                                 'Март': [6,8],
@@ -181,14 +180,6 @@ def default_timesheet(place="Работа в офисе",employee_name="Кони
          default_timesheet(employee_name = employee_name)
          wb.save(filename)
          return filename
-
-    
-
-    #thins = Side(border_style="medium", color="000000")
-    
-#teams = ['Грязнов Юрий Сергеевич', 'Дыдыкин Иван Александрович', "Храмов Роман Андреевич", "Смирнов Александр Юрьевич"]
-#for name in teams:
-    #default_timesheet(employee_name = name)
 
 def close_workbook(filename):
     excel = win32com.client.Dispatch("Excel.Application", pythoncom.CoInitialize())
